@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-[#020617] text-white overflow-hidden selection:bg-[#22d3ee]/30;
+  }
+}
+
+@layer utilities {
+  .frosted-bg {
+    background: 
+      radial-gradient(circle at 20% 20%, #1e1b4b 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, #312e81 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%);
+  }
+
+  .glass-main {
+    @apply bg-white/5 backdrop-blur-[30px] border border-white/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)];
+  }
+  
+  .glass-aside {
+    @apply bg-white/3 backdrop-blur-[20px] border border-white/5;
+  }
+  
+  .calc-btn-standard {
+    @apply aspect-square rounded-full flex items-center justify-center text-2xl font-normal transition-all duration-200;
+    @apply bg-white/8 border border-white/5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)];
+  }
+
+  .calc-btn-op {
+    @apply bg-[#22d3ee14] text-[#22d3ee] border border-[#22d3ee33];
+  }
+  
+  .calc-btn-accent {
+    @apply bg-gradient-to-br from-[#22d3ee] to-[#0891b2] text-[#020617] font-semibold border-none;
+    @apply shadow-[0_0_20px_rgba(34,211,238,0.3)];
+  }
+
+  .text-glow-subtle {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  }
+}
+
