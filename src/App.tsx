@@ -3,10 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  History, 
   Trash2, 
   Delete, 
   Percent, 
@@ -75,7 +74,15 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
 
-  // Background blobs from Frosted Glass theme
+  // Apply class to HTML tag for CSS selectors
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
   const blobs = [
     { id: 'cyan', color: 'bg-[#22d3ee]', pos: 'top-[100px] left-[100px]' },
     { id: 'purple', color: 'bg-[#c084fc]', pos: 'bottom-[100px] right-[100px]' },
@@ -155,7 +162,6 @@ export default function App() {
     if (action === 'delete') deleteLast();
   }, [clear, deleteLast]);
 
-  // Keyboard support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key >= '0' && e.key <= '9') handleNumber(e.key);
@@ -171,14 +177,14 @@ export default function App() {
   }, [handleNumber, handleOperator, calculate, deleteLast, clear]);
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 transition-colors duration-500 font-sans frosted-bg">
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 transition-colors duration-500 font-sans theme-bg theme-text-main">
       {/* Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {blobs.map((blob) => (
           <div
             key={blob.id}
             className={cn(
-              "absolute w-[400px] h-[400px] rounded-full blur-[80px] opacity-40 z-0",
+              "absolute w-[400px] h-[400px] rounded-full blur-[80px] opacity-20 z-0",
               blob.color,
               blob.pos
             )}
@@ -186,44 +192,45 @@ export default function App() {
         ))}
       </div>
 
-      {/* Status Bar */}
+      {/* App Version Info */}
       <div className="absolute top-10 left-10 flex items-center gap-3 z-20">
         <div className="w-2 h-2 bg-[#22d3ee] rounded-full shadow-[0_0_10px_#22d3ee]" />
-        <span className="text-sm font-semibold tracking-[3px] uppercase text-white/60">Lumina Calc v2.0</span>
+        <span className="text-sm font-semibold tracking-[3px] uppercase theme-text-muted">Lumina Calc v2.0</span>
       </div>
 
-      {/* Main Layout Containers */}
       <div className="relative z-10 flex flex-col lg:flex-row gap-10 items-center lg:items-start max-w-7xl">
         
-        {/* Calculator Card */}
+        {/* Calculator UI */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-[380px] glass-main rounded-[48px] overflow-hidden p-8 flex flex-col"
+          className="w-full max-w-[380px] theme-glass rounded-[48px] overflow-hidden p-8 flex flex-col"
         >
-          {/* Header Controls (Minimalized for theme) */}
           <div className="flex items-center justify-between mb-8">
             <button 
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2 rounded-full hover:bg-white/10 transition-colors"
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
             >
-              <Moon className="w-5 h-5 text-[#22d3ee]" />
+              {isDarkMode ? (
+                <Sun className="w-5 h-5 text-yellow-400" />
+              ) : (
+                <Moon className="w-5 h-5 text-[#22d3ee]" />
+              )}
             </button>
             <div className="flex gap-4">
-              <button onClick={() => setShowInfo(true)} className="opacity-40 hover:opacity-100 transition-opacity">
+              <button onClick={() => setShowInfo(true)} className="theme-text-muted opacity-40 hover:opacity-100 transition-opacity">
                 <Info className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Display Section */}
           <div className="text-right mb-8 px-2 overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.div 
                 key={prevInput + operation}
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-lg text-white/40 font-light mb-1 h-7"
+                className="text-lg theme-text-muted font-light mb-1 h-7"
               >
                 {prevInput} {operation && (operation === '*' ? '×' : operation === '/' ? '÷' : operation)}
               </motion.div>
@@ -242,7 +249,6 @@ export default function App() {
             </motion.div>
           </div>
 
-          {/* Buttons Grid */}
           <div className="grid grid-cols-4 gap-4">
             {BUTTONS.map((btn) => (
               <motion.button
@@ -271,14 +277,14 @@ export default function App() {
           </div>
         </motion.div>
 
-        {/* History Card (Sideboard) */}
+        {/* History UI */}
         <motion.div 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="w-[280px] p-6 glass-main/80 rounded-[32px] lg:mt-10 backdrop-blur-2xl border-white/5"
+          className="w-[280px] p-6 theme-glass rounded-[32px] lg:mt-10 backdrop-blur-2xl"
         >
-          <div className="text-[12px] uppercase tracking-[2px] text-white/30 font-semibold mb-5 flex justify-between items-center">
+          <div className="text-[12px] uppercase tracking-[2px] theme-text-muted font-semibold mb-5 flex justify-between items-center">
             Recent Activity
             <button onClick={() => setHistory([])} className="hover:text-red-400 transition-colors">
               <Trash2 className="w-3.5 h-3.5" />
@@ -287,7 +293,7 @@ export default function App() {
           
           <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
             {history.length === 0 ? (
-              <div className="py-8 text-center text-sm text-white/20 italic">No activity recorded</div>
+              <div className="py-8 text-center text-sm theme-text-muted italic">No activity recorded</div>
             ) : (
               history.map((item) => (
                 <div 
@@ -295,9 +301,9 @@ export default function App() {
                   className="group cursor-pointer"
                   onClick={() => setInput(item.result)}
                 >
-                  <div className="text-sm text-white/40 mb-1 group-hover:text-[#22d3ee] transition-colors">{item.expression}</div>
+                  <div className="text-sm theme-text-muted mb-1 group-hover:text-[#22d3ee] transition-colors">{item.expression}</div>
                   <div className="text-lg font-light">= {item.result}</div>
-                  <div className="h-[1px] w-full bg-white/5 mt-4" />
+                  <div className="h-[1px] w-full bg-black/5 dark:bg-white/5 mt-4" />
                 </div>
               ))
             )}
@@ -306,6 +312,39 @@ export default function App() {
       </div>
 
       <style>{`
+        /* THEME COLOR DEFINITIONS */
+        :root {
+          --bg-color: #f8fafc;
+          --text-main: #1e293b;
+          --text-muted: #64748b;
+          --glass-bg: rgba(255, 255, 255, 0.7);
+          --glass-border: rgba(0, 0, 0, 0.05);
+        }
+
+        .dark {
+          --bg-color: #0f172a;
+          --text-main: #f8fafc;
+          --text-muted: rgba(255, 255, 255, 0.4);
+          --glass-bg: rgba(15, 23, 42, 0.6);
+          --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        /* THEME ENGINE */
+        .theme-bg { 
+          background-color: var(--bg-color); 
+          transition: background-color 0.4s ease;
+        }
+
+        .theme-glass {
+          background: var(--glass-bg);
+          border: 1px solid var(--glass-border);
+          backdrop-filter: blur(24px);
+          transition: background 0.4s ease, border 0.4s ease;
+        }
+
+        .theme-text-main { color: var(--text-main); transition: color 0.4s ease; }
+        .theme-text-muted { color: var(--text-muted); transition: color 0.4s ease; }
+
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
