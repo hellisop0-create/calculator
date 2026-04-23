@@ -17,7 +17,9 @@ import {
   RotateCcw,
   Sun,
   Moon,
-  Info
+  Info,
+  History,
+  ChevronLeft
 } from 'lucide-react';
 import { cn } from './lib/utils';
 
@@ -71,20 +73,16 @@ export default function App() {
   const [operation, setOperation] = useState('');
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
-
-  const blobs = [
-    { id: 'cyan', color: 'bg-[#22d3ee]', pos: 'top-[100px] left-[100px]' },
-    { id: 'purple', color: 'bg-[#c084fc]', pos: 'bottom-[100px] right-[100px]' },
-  ];
+  const theme = {
+    bg: isDarkMode ? '#0f172a' : '#f8fafc',
+    text: isDarkMode ? '#f8fafc' : '#1e293b',
+    muted: isDarkMode ? 'rgba(255,255,255,0.4)' : '#64748b',
+    glass: isDarkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.98)',
+    border: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+  };
 
   const handleNumber = useCallback((num: string) => {
     setInput(prev => {
@@ -126,187 +124,142 @@ export default function App() {
 
     const formattedResult = Number(result.toFixed(8)).toString();
     const expression = `${prevInput} ${operation} ${input}`;
-    const newHistoryItem: HistoryItem = {
-      id: crypto.randomUUID(),
-      expression,
-      result: formattedResult,
-      timestamp: Date.now(),
-    };
-
-    setHistory(prev => [newHistoryItem, ...prev].slice(0, 20));
+    setHistory(prev => [{ id: crypto.randomUUID(), expression, result: formattedResult, timestamp: Date.now() }, ...prev].slice(0, 20));
     setInput(formattedResult);
     setPrevInput('');
     setOperation('');
   }, [input, prevInput, operation]);
 
-  const clear = useCallback(() => {
-    setInput('0');
-    setPrevInput('');
-    setOperation('');
-  }, []);
-
-  const deleteLast = useCallback(() => {
-    setInput(prev => (prev.length > 1 ? prev.slice(0, -1) : '0'));
-  }, []);
-
   const handleAction = useCallback((action: string) => {
-    if (action === 'clear') clear();
-    if (action === 'delete') deleteLast();
-  }, [clear, deleteLast]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key >= '0' && e.key <= '9') handleNumber(e.key);
-      if (e.key === '.') handleNumber('.');
-      if (['+', '-', '*', '/', '%'].includes(e.key)) handleOperator(e.key);
-      if (e.key === 'Enter' || e.key === '=') calculate();
-      if (e.key === 'Backspace') deleteLast();
-      if (e.key === 'Escape') clear();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNumber, handleOperator, calculate, deleteLast, clear]);
+    if (action === 'clear') { setInput('0'); setPrevInput(''); setOperation(''); }
+    if (action === 'delete') setInput(prev => (prev.length > 1 ? prev.slice(0, -1) : '0'));
+  }, []);
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col items-center justify-start lg:justify-center p-4 lg:p-8 transition-colors duration-500 font-sans theme-bg theme-text-main overflow-x-hidden">
-      
-      {/* Background Blobs */}
+    <div 
+      className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 transition-all duration-500 overflow-hidden"
+      style={{ backgroundColor: theme.bg, color: theme.text }}
+    >
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {blobs.map((blob) => (
-          <div
-            key={blob.id}
-            className={cn(
-              "absolute w-[300px] lg:w-[400px] h-[300px] lg:h-[400px] rounded-full blur-[80px] opacity-20 z-0",
-              blob.color,
-              blob.pos
-            )}
-          />
-        ))}
+        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-[#22d3ee] rounded-full blur-[120px] opacity-20" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-[#c084fc] rounded-full blur-[120px] opacity-20" />
       </div>
 
-      {/* App Version Info - Hidden on very small screens to save space */}
-      <div className="hidden sm:flex absolute top-6 left-6 items-center gap-3 z-20">
-        <div className="w-2 h-2 bg-[#22d3ee] rounded-full shadow-[0_0_10px_#22d3ee]" />
-        <span className="text-[10px] lg:text-sm font-semibold tracking-[3px] uppercase theme-text-muted">Lumina Calc v2.0</span>
-      </div>
-
-      <div className="relative z-10 flex flex-col lg:flex-row gap-6 lg:gap-10 items-center lg:items-start w-full max-w-7xl justify-center mt-12 lg:mt-0">
+      <div className="relative z-10 flex flex-col lg:flex-row gap-6 lg:gap-10 items-center lg:items-start w-full max-w-6xl justify-center">
         
-        {/* Calculator Card */}
+        {/* Main Calculator Card */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-[380px] theme-glass rounded-[32px] lg:rounded-[48px] overflow-hidden p-6 lg:p-8 flex flex-col"
+          className="w-full max-w-[380px] rounded-[40px] p-6 lg:p-8 flex flex-col shadow-2xl"
+          style={{ background: theme.glass, border: `1px solid ${theme.border}`, backdropFilter: 'blur(30px)' }}
         >
-          <div className="flex items-center justify-between mb-6 lg:mb-8">
-            <button 
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-            >
-              {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-[#22d3ee]" />}
+          <div className="flex items-center justify-between mb-8">
+            <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+              {isDarkMode ? <Sun className="w-6 h-6 text-yellow-400" /> : <Moon className="w-6 h-6 text-[#22d3ee]" />}
             </button>
-            <div className="flex gap-4">
-              <button onClick={() => setShowInfo(!showInfo)} className="theme-text-muted opacity-40 hover:opacity-100 transition-opacity">
-                <Info className="w-4 h-4" />
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setShowHistory(true)} 
+                className="p-2 rounded-full opacity-60 hover:opacity-100 transition-all"
+              >
+                <History className="w-6 h-6" />
               </button>
             </div>
           </div>
 
-          {/* Display */}
-          <div className="text-right mb-6 lg:mb-8 px-2 overflow-hidden">
-            <AnimatePresence mode="wait">
-              <motion.div key={prevInput + operation} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="text-lg theme-text-muted font-light mb-1 h-7">
-                {prevInput} {operation && (operation === '*' ? '×' : operation === '/' ? '÷' : operation)}
-              </motion.div>
-            </AnimatePresence>
-            <motion.div key={input} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={cn("text-5xl lg:text-[72px] font-extralight tracking-[-2px] leading-tight truncate", input.length > 8 && "text-4xl lg:text-5xl", input.length > 12 && "text-3xl lg:text-4xl")}>
+          <div className="text-right mb-8 px-2">
+            <div className="text-lg font-light mb-1 h-7" style={{ color: theme.muted }}>
+              {prevInput} {operation === '*' ? '×' : operation === '/' ? '÷' : operation}
+            </div>
+            <div className="text-5xl lg:text-7xl font-extralight tracking-tight truncate">
               {input}
-            </motion.div>
+            </div>
           </div>
 
-          {/* Grid */}
           <div className="grid grid-cols-4 gap-3 lg:gap-4">
             {BUTTONS.map((btn) => (
-              <motion.button
+              <button
                 key={btn.value}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
                 onClick={() => {
                   if (btn.type === 'number') handleNumber(btn.value);
                   if (btn.type === 'operator') btn.value === '=' ? calculate() : handleOperator(btn.value);
                   if (btn.type === 'action') handleAction(btn.value);
                 }}
                 className={cn(
-                  "calc-btn-standard text-base lg:text-lg",
-                  btn.span === 2 && "col-span-2 aspect-auto rounded-[50px]",
-                  btn.type === 'operator' && btn.value !== '=' && "calc-btn-op",
-                  btn.value === '=' && "calc-btn-accent",
-                  btn.type === 'action' && "calc-btn-op opacity-80"
+                  "flex items-center justify-center aspect-square rounded-2xl text-xl font-medium transition-all hover:scale-105 active:scale-95",
+                  btn.span === 2 ? "col-span-2 aspect-auto rounded-[30px]" : "",
+                  btn.value === '=' ? "bg-[#22d3ee] text-white shadow-lg shadow-cyan-500/20" : "bg-black/5 dark:bg-white/5"
                 )}
               >
                 {btn.icon || btn.label}
-              </motion.button>
+              </button>
             ))}
           </div>
         </motion.div>
 
-        {/* Recent Activity Card - Now adapts to mobile */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="w-full max-w-[380px] lg:w-[280px] p-6 theme-glass rounded-[32px] lg:mt-10 backdrop-blur-2xl"
-        >
-          <div className="text-[12px] uppercase tracking-[2px] theme-text-muted font-semibold mb-5 flex justify-between items-center">
-            Recent Activity
-            <button onClick={() => setHistory([])} className="hover:text-red-400 transition-colors">
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
-          
-          <div className="space-y-6 max-h-[300px] lg:max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-            {history.length === 0 ? (
-              <div className="py-8 text-center text-sm theme-text-muted italic">No activity recorded</div>
-            ) : (
-              history.map((item) => (
-                <div key={item.id} className="group cursor-pointer" onClick={() => setInput(item.result)}>
-                  <div className="text-sm theme-text-muted mb-1 group-hover:text-[#22d3ee] transition-colors">{item.expression}</div>
-                  <div className="text-lg font-light theme-text-main">= {item.result}</div>
-                  <div className="h-[1px] w-full bg-black/5 dark:bg-white/5 mt-4" />
-                </div>
-              ))
-            )}
-          </div>
-        </motion.div>
+        {/* History Modal (Popup on Mobile / Panel on Desktop) */}
+        <AnimatePresence>
+          {showHistory && (
+            <motion.div 
+              initial={{ opacity: 0, y: '100%' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-0 lg:relative lg:inset-auto z-50 w-full lg:w-[320px] lg:h-auto flex flex-col lg:rounded-[40px] shadow-2xl overflow-hidden"
+              style={{ 
+                background: theme.glass, 
+                border: `1px solid ${theme.border}`, 
+                backdropFilter: 'blur(40px)',
+                height: typeof window !== 'undefined' && window.innerWidth < 1024 ? '100vh' : 'auto'
+              }}
+            >
+              {/* Popup Header with Back Button */}
+              <div className="flex justify-between items-center p-6 border-b" style={{ borderColor: theme.border }}>
+                <button 
+                  onClick={() => setShowHistory(false)} 
+                  className="flex items-center gap-1 text-sm font-medium opacity-60 hover:opacity-100 transition-all"
+                >
+                  <ChevronLeft className="w-5 h-5" /> 
+                  <span>Back</span>
+                </button>
+                <span className="text-xs uppercase tracking-widest font-bold" style={{ color: theme.muted }}>Recent Activity</span>
+                <button 
+                  onClick={() => setHistory([])} 
+                  className="p-2 hover:text-red-500 opacity-40 hover:opacity-100 transition-all"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {/* History Content */}
+              <div className="flex-1 space-y-6 p-6 overflow-y-auto custom-scrollbar">
+                {history.length === 0 ? (
+                  <div className="py-12 text-center text-sm italic opacity-30">No history available</div>
+                ) : (
+                  history.map((item) => (
+                    <div 
+                      key={item.id} 
+                      className="cursor-pointer group" 
+                      onClick={() => {
+                        setInput(item.result);
+                        if (window.innerWidth < 1024) setShowHistory(false);
+                      }}
+                    >
+                      <div className="text-xs mb-1 opacity-50 group-hover:text-[#22d3ee] transition-colors">{item.expression}</div>
+                      <div className="text-lg font-light">= {item.result}</div>
+                      <div className="h-[1px] w-full mt-4 opacity-10" style={{ backgroundColor: theme.text }} />
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <style>{`
-        :root {
-          --bg-color: #f8fafc;
-          --text-main: #1e293b;
-          --text-muted: #64748b;
-          --glass-bg: rgba(255, 255, 255, 0.7);
-          --glass-border: rgba(0, 0, 0, 0.05);
-        }
-        .dark {
-          --bg-color: #0f172a;
-          --text-main: #f8fafc;
-          --text-muted: rgba(255, 255, 255, 0.4);
-          --glass-bg: rgba(15, 23, 42, 0.6);
-          --glass-border: rgba(255, 255, 255, 0.1);
-        }
-        .theme-bg { background-color: var(--bg-color); transition: background-color 0.4s ease; }
-        .theme-glass {
-          background: var(--glass-bg);
-          border: 1px solid var(--glass-border);
-          backdrop-filter: blur(24px);
-          transition: background 0.4s ease, border 0.4s ease;
-        }
-        .theme-text-main { color: var(--text-main); transition: color 0.4s ease; }
-        .theme-text-muted { color: var(--text-muted); transition: color 0.4s ease; }
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(155,155,155,0.3); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
       `}</style>
     </div>
   );
